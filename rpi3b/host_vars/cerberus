@@ -1,0 +1,10 @@
+---
+hostname: "cerberus"
+domain: "local"
+bootsplash: False
+bootwait: False
+locale: "en_US.UTF-8"
+timezone: "Asia/Kolkata"
+wifi_country: "IN"
+xkblayout: "us"
+user: chnmy

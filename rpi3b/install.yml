@@ -1,0 +1,5 @@
+- name: Configure Raspbian
+  hosts: pi
+  become: true
+  roles:
+    - role: configuration

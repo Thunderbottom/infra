@@ -1,0 +1,51 @@
+- name: Get current Pi hostname
+  shell: "raspi-config nonint get_hostname"
+  register: current_hostname
+  changed_when: False
+  check_mode: no
+
+- name: Get current WiFi country
+  shell: "raspi-config nonint get_wifi_country"
+  register: wifi_country
+  changed_when: False
+  check_mode: no
+
+- name: Check if SSH is enabled
+  shell: "raspi-config nonint get_ssh"
+  register: ssh_status
+  changed_when: False
+  check_mode: no
+
+- name: Check if the filesystem is expandable
+  shell: "raspi-config nonint get_can_expand"
+  register: is_expandable
+  changed_when: False
+  check_mode: no
+
+- name: Check disk sector for filesystem expansion
+  shell: "parted /dev/mmcblk0 -ms unit s p | tail -n1 | awk -F':' '{ print $3 + 0 }'"
+  register: last_sector
+  changed_when: False
+  check_mode: no
+
+- name: Get current system timezone
+  shell: "cat /etc/timezone"
+  register: current_timezone
+  changed_when: False
+  check_mode: no
+
+- name: Get current system locale
+  shell: "locale | grep '^LANG=' | cut -d'=' -f2"
+  register: current_locale
+  changed_when: False
+  check_mode: no
+
+- name: Set Pi Facts
+  set_fact:
+    current_hostname: "{{ current_hostname.stdout }}"
+    wifi_country: "{{ wifi_country.stdout }}"
+    ssh_status: "{{ ssh_status.stdout == '0' }}"
+    is_expandable: "{{ is_expandable.stdout == '0' and (last_sector.stdout|int + 1) < ansible_devices.mmcblk0.sectors|int }}"
+    current_timezone: "{{ current_timezone.stdout }}"
+    current_locale: "{{ current_locale.stdout }}"
+    check_mode: no

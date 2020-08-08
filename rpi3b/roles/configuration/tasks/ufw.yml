@@ -1,0 +1,27 @@
+- name: Allow SSH through UFW
+  ufw:
+    rule: allow
+    port: ssh
+    proto: tcp
+    log: yes
+
+- name: Disallow multicast
+  ufw:
+    rule: deny
+    to_ip: 224.0.0.1
+    log: no
+
+- name: Disallow all incoming connections
+  ufw:
+    direction: incoming
+    policy: deny
+
+- name: Allow all outgoing connections
+  ufw:
+    direction: outgoing
+    policy: allow
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    logging: on

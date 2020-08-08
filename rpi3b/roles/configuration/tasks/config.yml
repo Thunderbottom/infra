@@ -1,0 +1,18 @@
+- name: Get MAC address for eth0
+  set_fact:
+    mac_addr: "{{ hostvars[inventory_hostname].ansible_eth0.macaddress }}"
+
+- name: Get MAC address for wlan0
+  set_fact:
+    mac_addr: "{{ hostvars[inventory_hostname].ansible_wlan0.macaddress }}"
+  when: "mac_addr is not defined"
+
+- name: Get Pi facts as configuration
+  set_fact:
+    pi_config: "{{ hostvars[inventory_hostname_short] }}"
+
+- assert:
+  that: "{{ pi_config | length > 0 }}"
+
+- debug:
+  msg: "{{ pi_config.hostname }}: configuration loaded."

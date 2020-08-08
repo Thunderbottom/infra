@@ -1,0 +1,69 @@
+- name: Import Configuration
+  include: config.yml
+
+- name: Import Facts
+  include: facts.yml
+
+- name: Set Pi Hostname
+  shell: "raspi-config nonint do_hostname {{ pi_config.hostname }}"
+  when: current_hostname != pi_config.hostname
+
+- name: Update Hosts [1/2]
+  lineinfile:
+    dest=/etc/hosts
+    regexp="{{ ansible_default_ipv4.address }}"
+    line="{{ ansible_default_ipv4.address }}{{'\t'}}{{ pi_config.hostname }}.{{ pi_config.domain }}{{'\t'}}{{ pi_config.hostname }}"
+    state=present
+
+- name: Update Hosts [2/2]
+  lineinfile:
+    dest=/etc/hosts
+    regexp="^127.0.1.1"
+    state=absent
+
+- name: Set Locale
+  command: "raspi-config nonint do_change_locale {{ pi_config.locale }}"
+
+- name: Set Timezone
+  command: "timedatectl set-timezone {{ pi_config.timezone }}"
+
+- name: Set Keyboard Layout
+  command: "raspi-config nonint do_configure_keyboard {{ pi_config.xkblayout }}"
+
+- name: Set Wifi Country
+  command: "raspi-config nonint do_wifi_country {{ pi_config.wifi_country }}"
+  when:"'wifi_country' in pi_config and pi_config.wifi_country != wifi_country"
+
+- name: Expand filesystem
+  command: "raspi-config nonint do_expand_rootfs"
+  when: is_expandable
+  notify:
+    - Update Raspbian Configuration
+
+- name: Set GPU Split to 16M
+  command: "raspi-config nonint do_memory_split 16"
+  notify:
+    - Update Raspbian Configuration
+
+- name: Disable Bootwait
+  command: "raspi-config nonint do_boot_wait 1"
+  when: 'bootwait' in pi_config and not pi_config.bootwait
+
+- name: Disable Bootsplash
+  command: "raspi-config nonint do_boot_splash 1"
+  when: 'bootsplash' in pi_config and not pi_config.bootsplash
+
+- name: Set up APT Packages and Repository
+  include: apt.yml
+
+- name: Set up system user
+  include: user.yml
+
+- name: Set up SSH service
+  include: ssh.yml
+
+- name: Set up UFW service
+  include: ufw.yml
+
+- name: Reboot System
+  notify: Reboot System

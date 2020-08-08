@@ -1,0 +1,27 @@
+- name: Update Raspbian Configuration
+  command: raspi-config --apply-os-config
+
+- name: Reboot System
+  shell: "sleep 5 && shutdown -r now"
+  poll: false
+  async: true
+  notify:
+    - Wait for system reboot
+
+- name: Wait for system reboot
+  wait_for_connection:
+    delay: 5
+    timeout: 300
+
+- name: Remove Pi user
+  user:
+    name=pi state=absent force=yes
+  poll: false
+  async: false
+  ignore_errors: true
+  when: 'user' in pi_config and pi_config.user != "pi"
+
+- name: Restart SSH Service
+  service:
+    name: ssh
+    status: restarted

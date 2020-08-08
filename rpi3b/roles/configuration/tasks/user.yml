@@ -1,0 +1,20 @@
+- name: Create User {{ pi_config.user }}
+  user:
+    name: {{ pi_config.user }}
+  changed_when: true
+  when: "user" in pi_config and pi_config.user != "pi"
+  notify:
+    - Remove Pi user
+
+- name: Add SSH key to {{ pi_config.user }}
+  authorized_key:
+    user: {{ pi_config.user }}
+    key: "{{ lookup('file', pi_config.ssh_key) }}"
+  when: "user" in pi_config and "ssh_key" in pi_config
+
+- name: Add {{ pi_config.user }} to sudoers
+  lineinfile:
+  args:
+    dest: /etc/sudoers
+    line: "{{ pi_config.user }} ALL=(ALL) NOPASSWD: ALL"
+  when: "user" in pi_config and pi_config.user != "pi"

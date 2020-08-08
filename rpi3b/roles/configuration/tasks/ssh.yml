@@ -1,0 +1,49 @@
+- name: Enable SSH for Pi
+  shell: "raspi-config noint do_ssh 0"
+  when: not ssh_status
+
+- name: Disable root login for SSH
+  lineinfile:
+    dest: "{{ ssh_sshd_config }}"
+    regexp: "^#?PermitRootLogin"
+    line: "PermitRootLogin no"
+    state: present
+
+- name: Enable SSH Strict Mode
+  lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    regexp: "^#?StrictModes"
+    line: "StrictModes yes"
+    state: present
+
+- name: Disable SSH X11 forwarding
+  lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    regexp: "^#?X11Forwarding"
+    line: "X11Forwarding no"
+    state: present
+
+- name: Disable SSH Password Login
+  lineinfile:
+    dest: "/etc/ssh/sshd_config"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  with_items:
+    - regexp: "^#?PasswordAuthentication"
+      line: "PasswordAuthentication no"
+    - regexp: "^#?ChallengeResponseAuthentication"
+      line: "ChallengeResponseAuthentication no"
+    - regexp: "^#?UsePAM"
+      line: "UsePAM no"
+    - regexp: "^#?PermitEmptyPasswords"
+      line: "PermitEmptyPasswords no"
+
+- name: Set SSH allowed users to {{ pi_config.user }}
+  lineinfile:
+    dest: "{{ ssh_sshd_config }}"
+    regexp: "^#?AllowUsers"
+    line: "AllowUsers {{ ansible_ssh_user }}"
+  when: 'user' in pi_config and pi_config.user != 'pi'
+  notify:
+    - Restart SSH Service
